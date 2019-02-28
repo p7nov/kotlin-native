@@ -6,6 +6,8 @@ import org.jetbrains.kotlin.backend.konan.Context
 import org.jetbrains.kotlin.backend.konan.llvm.symbolName
 import org.jetbrains.kotlin.ir.declarations.IrFile
 import org.jetbrains.kotlin.ir.declarations.name
+import org.jetbrains.kotlin.ir.declarations.path
+import org.jetbrains.kotlin.konan.file.File
 
 private fun RegionKind.toLLVMCoverageRegionKind(): LLVMCoverageRegionKind = when (this) {
     RegionKind.Code -> LLVMCoverageRegionKind.CODE
@@ -56,7 +58,10 @@ internal class LLVMCoverageWriter(
                 Pair(functionMappingRecord, functionCoverage)
             }.unzip()
 
-            val (filenames, fileIds) = filesIndex.entries.toList().map { it.key.name to it.value }.unzip()
+            val (filenames, fileIds) = filesIndex.entries.toList().map { File(it.key.path).absolutePath to it.value }.unzip()
+            for (filename in filenames) {
+                println(filename)
+            }
 
             LLVMCoverageEmit(module, functionMappingRecords.toCValues(), functionMappingRecords.size.signExtend(),
                         filenames.toCStringArray(this), fileIds.toIntArray().toCValues(), fileIds.size.signExtend(),

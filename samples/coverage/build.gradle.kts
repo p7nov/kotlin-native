@@ -23,10 +23,8 @@ kotlin {
                 entryPoint = "coverage.main"
             }
         }
-//        compilations["main"].extraOpts = mutableListOf()
         binaries.getExecutable("test", DEBUG).apply {
             freeCompilerArgs = mutableListOf(
-                    "-Xtemporary-files-dir=.",
                     "-Xcoverage",
                     "-Xlibrary-to-cover=${compilations["main"].output.classesDirs.singleFile.absolutePath}"
             )
@@ -41,11 +39,9 @@ tasks.create("createCoverageReport") {
 
     doLast {
         exec {
-//            workingDir = File("$buildDir/gcov")
             commandLine("llvm-profdata", "merge", "default.profraw", "-o", "program.profdata")
         }
         exec {
-//            workingDir = File("$buildDir/gcov")
             commandLine("llvm-cov", "show", "$buildDir/bin/macos/testDebugExecutable/test.kexe", "-instr-profile", "program.profdata")
         }
     }
