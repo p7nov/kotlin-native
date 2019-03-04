@@ -15,25 +15,27 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.module
  */
 internal class CoverageManager(val context: Context) {
 
-    val enabled: Boolean
-        get() = context.config.configuration.getBoolean(KonanConfigKeys.COVERAGE)
+    private val shouldCoverProgram: Boolean =
+            context.config.configuration.getBoolean(KonanConfigKeys.COVERAGE)
+
+    private val librariesToCover: Set<String> =
+            context.config.configuration.getList(KonanConfigKeys.LIBRARIES_TO_COVER)
+                    .map { it.removeSuffixIfPresent(".klib") }
+                    .toSet()
+
+    val enabled: Boolean =
+            shouldCoverProgram || librariesToCover.isNotEmpty()
 
     private val filesRegionsInfo = mutableListOf<FileRegionInfo>()
 
     private fun getFunctionRegions(irFunction: IrFunction) =
             filesRegionsInfo.flatMap { it.functions }.firstOrNull { it.function == irFunction }
 
-    // TODO: make coverage mode explicit
     private val coveredModules: Set<ModuleDescriptor> by lazy {
-        val librariesToCover = context.config.configuration
-                .getList(KonanConfigKeys.LIBRARIES_TO_COVER)
-                .map { it.removeSuffixIfPresent(".klib") }
-                .toSet()
-        if (librariesToCover.isEmpty()) {
-            setOf(context.moduleDescriptor)
-        } else {
-            context.irModules.filter { it.key in librariesToCover }.values.map { it.descriptor }.toSet()
-        }
+        val coveredUserCode = if (shouldCoverProgram) setOf(context.moduleDescriptor) else emptySet()
+        val coveredLibs = context.irModules.filter { it.key in librariesToCover }.values
+                .map { it.descriptor }.toSet()
+        coveredLibs + coveredUserCode
     }
 
     private fun fileCoverageFilter(file: IrFile) =
@@ -52,7 +54,7 @@ internal class CoverageManager(val context: Context) {
     /**
      * @return [LLVMCoverageInstrumentation] instance if [irFunction] should be covered.
      */
-    fun getInstrumentation(irFunction: IrFunction?, callSitePlacer: (function: LLVMValueRef, args: List<LLVMValueRef>) -> Unit) =
+    fun tryGetInstrumentation(irFunction: IrFunction?, callSitePlacer: (function: LLVMValueRef, args: List<LLVMValueRef>) -> Unit) =
             if (enabled && irFunction != null) {
                 getFunctionRegions(irFunction)?.let { LLVMCoverageInstrumentation(context, it, callSitePlacer) }
             } else {
@@ -63,6 +65,8 @@ internal class CoverageManager(val context: Context) {
      * Add __llvm_coverage_mapping to the LLVM module.
      */
     fun writeRegionInfo() {
-        LLVMCoverageWriter(context, filesRegionsInfo).write()
+        if (enabled) {
+            LLVMCoverageWriter(context, filesRegionsInfo).write()
+        }
     }
 }

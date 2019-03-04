@@ -42,7 +42,6 @@ internal class LLVMCoverageWriter(
         val filesIndex = filesRegionsInfo.mapIndexed { index, fileRegionInfo -> fileRegionInfo.file to index }.toMap()
 
         val coverageGlobal = memScoped {
-            // TODO: Each record contains char* which should be freed.
             val (functionMappingRecords, functionCoverages) = filesRegionsInfo.flatMap { it.functions }.map { functionRegions ->
                 val regions = (functionRegions.regions.values).map { region ->
                     alloc<LLVMCoverageRegion>().populateFrom(region, functionRegions.regionEnumeration.getValue(region), filesIndex).ptr
@@ -57,15 +56,16 @@ internal class LLVMCoverageWriter(
 
                 Pair(functionMappingRecord, functionCoverage)
             }.unzip()
-
             val (filenames, fileIds) = filesIndex.entries.toList().map { File(it.key.path).absolutePath to it.value }.unzip()
-            for (filename in filenames) {
-                println(filename)
-            }
+            val retval = LLVMCoverageEmit(module, functionMappingRecords.toCValues(), functionMappingRecords.size.signExtend(),
+                    filenames.toCStringArray(this), fileIds.toIntArray().toCValues(), fileIds.size.signExtend(),
+                    functionCoverages.map { it.ptr }.toCValues(), functionCoverages.size.signExtend())!!
 
-            LLVMCoverageEmit(module, functionMappingRecords.toCValues(), functionMappingRecords.size.signExtend(),
-                        filenames.toCStringArray(this), fileIds.toIntArray().toCValues(), fileIds.size.signExtend(),
-                        functionCoverages.map { it.ptr }.toCValues(), functionCoverages.size.signExtend())!!
+            // TODO: Is there a better way to cleanup fields of T* type in `memScoped`?
+            functionCoverages.forEach { LLVMFunctionCoverageDispose(it.ptr) }
+
+            retval
+
         }
         context.llvm.usedGlobals.add(coverageGlobal)
     }

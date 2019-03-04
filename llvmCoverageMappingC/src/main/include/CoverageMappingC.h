@@ -63,6 +63,8 @@ LLVMAddFunctionMappingRecord(LLVMContextRef context, const char *name, uint64_t 
 struct LLVMFunctionCoverage LLVMWriteCoverageRegionMapping(unsigned int *fileIdMapping, size_t fileIdMappingSize,
                                            struct LLVMCoverageRegion **mappingRegions, size_t mappingRegionsSize);
 
+void LLVMFunctionCoverageDispose(struct LLVMFunctionCoverage* functionCoverage);
+
 /**
  * Create __llvm_coverage_mapping global.
  */
@@ -82,5 +84,6 @@ LLVMValueRef LLVMCreatePGOFunctionNameVar(LLVMValueRef llvmFunction, const char 
 
 # ifdef __cplusplus
 }
+
 # endif
 #endif

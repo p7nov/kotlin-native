@@ -59,10 +59,14 @@ LLVMFunctionCoverage LLVMWriteCoverageRegionMapping(unsigned int *fileIdMapping,
     raw_string_ostream OS(CoverageMapping);
     writer.write(OS);
     OS.flush();
-    char *coverageData = new char[CoverageMapping.length() + 1];
+    char *coverageData = (char *) malloc(sizeof(char) * (CoverageMapping.length() + 1));
     // Use memcpy because CoverageMapping could contain '\0' in it.
     std::memcpy(coverageData, CoverageMapping.c_str(), CoverageMapping.length());
     return LLVMFunctionCoverage{.coverageData = coverageData, .size = CoverageMapping.length()};
+}
+
+void LLVMFunctionCoverageDispose(struct LLVMFunctionCoverage* functionCoverage) {
+    delete[] functionCoverage->coverageData;
 }
 
 static StructType *getFunctionRecordTy(LLVMContext &Ctx) {
