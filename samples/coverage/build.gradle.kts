@@ -25,7 +25,6 @@ kotlin {
         }
         binaries.getExecutable("test", DEBUG).apply {
             freeCompilerArgs = mutableListOf(
-                    "-Xcoverage",
                     "-Xlibrary-to-cover=${compilations["main"].output.classesDirs.singleFile.absolutePath}"
             )
         }
@@ -37,6 +36,7 @@ tasks.create("createCoverageReport") {
 
     description = "Create coverage report"
 
+    // TODO: use tools from distribution
     doLast {
         exec {
             commandLine("llvm-profdata", "merge", "default.profraw", "-o", "program.profdata")

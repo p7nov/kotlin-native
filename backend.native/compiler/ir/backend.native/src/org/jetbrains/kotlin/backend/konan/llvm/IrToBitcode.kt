@@ -603,7 +603,7 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
 
 
         val coverageInstrumentation: LLVMCoverageInstrumentation? =
-                context.coverage.getInstrumentation(declaration) { function, args -> functionGenerationContext.call(function, args) }
+                context.coverage.tryGetInstrumentation(declaration) { function, args -> functionGenerationContext.call(function, args) }
 
         private var name:String? = declaration?.name?.asString()
 
