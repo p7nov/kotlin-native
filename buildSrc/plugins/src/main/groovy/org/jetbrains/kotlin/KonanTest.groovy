@@ -282,7 +282,7 @@ abstract class KonanTest extends JavaExec {
         out = new ByteArrayOutputStream()
         //TODO Add test timeout
         ExecResult execResult = project.execute {
-
+            it.environment = this.environment
             commandLine exe
 
             if (arguments != null) {

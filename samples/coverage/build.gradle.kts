@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
+
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
 }
@@ -36,13 +38,14 @@ tasks.create("createCoverageReport") {
 
     description = "Create coverage report"
 
-    // TODO: use tools from distribution
+    // TODO: use tools from the distribution
     doLast {
         exec {
             commandLine("llvm-profdata", "merge", "default.profraw", "-o", "program.profdata")
         }
         exec {
-            commandLine("llvm-cov", "show", "$buildDir/bin/macos/testDebugExecutable/test.kexe", "-instr-profile", "program.profdata")
+            val testDebugBinary = kotlin.targets["macos"].let { it as KotlinNativeTarget }.binaries.getExecutable("test", "debug").outputFile
+            commandLine("llvm-cov", "show", "$testDebugBinary", "-instr-profile", "program.profdata")
         }
     }
 }

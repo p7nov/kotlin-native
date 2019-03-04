@@ -3211,6 +3211,33 @@ task runKonanRegexTests(type: RunKonanTest) {
     runnerLogger = RunKonanTest.Logger.GTEST
 }
 
+task coverage_basic_program(type: RunStandaloneKonanTest) {
+
+    disabled = true
+
+    description = "Test that `-Xcoverage` generates correct __llvm_coverage information"
+
+    def dir = buildDir.absolutePath
+
+    environment "LLVM_PROFILE_FILE", "$dir/program.profraw"
+
+    flags = ["-Xcoverage", "-entry", "coverage.basic.program.main"]
+    source = "$projectDir/coverage/basic/program/main.kt"
+
+//    doLast {
+//        execLlvm("llvm-profdata") {
+//            args "merge"
+//            args "$dir/program.profraw"
+//            args "-o", "program.profdata"
+//        }
+//        execLlvm("llvm-cov") {
+//            args "show"
+//            args "$projectDir/default.profraw"
+//            args "-instr-profile", "program.profdata"
+//        }
+//    }
+}
+
 task buildKonanStdlibTests(type: BuildKonanTest) {
     outputSourceSetName = "testOutputStdlib"
     flags = [ "-Xmulti-platform", "-friend-modules",  project.rootProject.file("${project.properties['konan.home']}/klib/common/stdlib") ]

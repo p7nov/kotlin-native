@@ -21,7 +21,12 @@ Note that library also should be linked via `-library/-l` compiler option.
 #### Running covered executable.
 
 After running of the compiled executable (ex. `program.kexe`) `default.profraw` 
-will be generated in the current working directory.
+will be generated in the current working directory. `LLVM_PROFILE_DIR` environment variable 
+controls output path for `*.profraw` file. So if you run your program like this:
+```
+$LLVM_PROFILE_DIR=build/program.profraw ./program.kexe
+```
+Then the output will be stored to the `build` dir as `program.profraw`.
 
 #### Parsing `*.profraw` 
 
@@ -41,5 +46,5 @@ Or create a simple line-by-line coverage information in html:
     `llvm-cov show program.kexe -instr-profile program.profdata  -format=html > report.html` 
 
 ### Sample
-
-Please refer to `samples/coverage` to see how to generate coverage information during testing.
+Usually coverage information is collected during running of the tests. 
+Please refer to `samples/coverage` to see how it can be done.
